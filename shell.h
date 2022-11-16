@@ -2,100 +2,102 @@
 #define SHELL_H
 
 #include <stdio.h>
+#include <wchar.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <string.h>
-#include <dirent.h>
-#include <errno.h>
+#include <unistd.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/types.h>
 
-/* this just does in one line: free(x); x = NULL; */
-#define FREE(x) (x = (free(x), NULL))
-#define PROMPT "Ship$ "
-/* structs */
 /**
-  * struct order - struct to contain &&'s and ||'s
-  * @n: coded int, 1 = ; , 2 = && , 3 = ||
-  * @next: points to the next node
-  */
-typedef struct order
+ * struct error_msg - An structure for each error message
+ *
+ * @ecode: error code
+ * @msg: pointer to error message
+ * @size: error message length.
+ */
+typedef struct error_msg
 {
-	unsigned int n;
-	struct order *next;
-} order_t;
+	int ecode;
+	char *msg;
+	int  size;
+} error_msg_t;
+
 /**
-  * struct env_list - struct to contain env
-  * @name: name of env var
-  * @value: value of env var
-  * @next: points to the next node
-  */
-typedef struct env_list
+ * struct built_s - Builtings commands
+ * @command: command name.
+ * @f: function to call.
+ *
+ * Description: Longer description
+ */
+typedef struct built_s
 {
-	char *name;
-	char *value;
-	struct env_list *next;
-} env_list_t;
+	char *command;
+	void (*f)(char **);
+} built_t;
 
-/* getline */
-int _getline(char **lineptr, size_t *n, FILE *stream);
+/**
+ * struct history - An structure for each command readed
+ *
+ * @id_h: error code
+ * @comms: Commands
+ * @prev: Previous element
+ * @next: Next element
+ */
 
-/* memory helpers */
-void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size);
+typedef struct history
+{
+	unsigned int id_h;
+	char *comms;
+	struct history *prev;
+	struct history *next;
+} history_t;
 
-/* string helpers */
-int _atoi(char *s);
-int _strlen(char *str);
+/**
+ * struct command_s - An structure for each command
+ *
+ * @command: command with arguments.
+ * @next: pointer to next command.
+ */
+typedef struct command_s
+{
+	char **command;
+	struct command_s *next;
+} command_t;
+
+/* Shell functions */
+command_t **_prompt(char *, char *);
+int _fork(char *, command_t *, char *, char **);
+int _stat(char *, char *);
+int _exec(char *, char **, char **);
+
+/* Utilities */
+char *read_line(void);
+
+size_t _strlen(char *str);
+command_t *_parser_cmd(char *, char *);
+size_t _parser_arg(char *, char **, size_t *);
+void print_char_pointer_arr(char **, size_t);
+int add_nodeint(history_t **head, char *str);
 char *_strdup(char *str);
+void free_listint(history_t *head);
+void print_listint(const history_t *);
+char *find_path(char **);
+char *_strstr(char *haystack, char *needle);
+void print_env(char **);
+char *_which(char *p_rec, char *first_arg);
+char *string_nconcat(char *s1, char *s2, unsigned int n);
 int _strcmp(char *s1, char *s2);
-char *_strcpy(char *dest, char *src);
-char *_strcat(char *dest, char *src);
-char *_strtok(char *buffer, const char *delim);
-char *_strchr(char *s, char c);
-void _puts(char *str);
-void puts_prompt(void);
-int _putchar(char c);
-void _puts_int(int n);
-int MATH_pow(int base, int exp);
+void _exit_func(char **);
+int verif_built_comm(char *str, char **env);
 
-/* cmd_handler */
-int cmd_handler(char **argv, env_list_t **env);
-int built_in_handler(char **argv, env_list_t **env, int i);
-int _cd(char **argv, env_list_t **env);
-void do_nothing(int nothing);
+/* Error handler */
+void error_handler(char *, int);
+void error_handler_set_default(int, char *);
 
-/* cmd assembly */
-char **get_tokens(char *str_tok, char *delim);
-int isin_dir(char *term, char *dir);
-char *whitcher(char *cmd, env_list_t **env);
-void rem_comments(char *str);
-void double_free(char **argv);
+/* Command Utilities */
+command_t *new_cmd_node(char *);
+void add_tok_to_cmd(char *, command_t *, size_t, char *);
 
-/* env variable */
-char **_initenv(void);
-void _setenv(char **argv, char ***env);
-void _unsetenv(char *entry, char ***env);
-char *_getenv(char *entry, char ***env);
-void _printenv(char ***env);
-
-/* env_list */
-env_list_t **_initenv_list(void);
-void printenv_list(env_list_t **env);
-char *_getenv_list_value(char *name, env_list_t **env);
-env_list_t *_getenv_list_node(char *name, env_list_t **env);
-void _setenv_list(char **argv, env_list_t **env);
-void free_env_list_node(env_list_t *node);
-void _unsetenv_list(char **argv, env_list_t **env);
-void free_env_list(env_list_t **env);
-char **_get_str_env(env_list_t **env);
-
-/* ops */
-void *op_push_end(order_t **ops, int n);
-char **_get_cmds(char *line, order_t **ops);
-void free_ops(order_t **ops);
-
-extern char **environ;
-extern int *LINE_COUNT;
-extern char **FNC_NAME;
-#endif /* SHELL */
+#endif
