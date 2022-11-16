@@ -1,84 +1,113 @@
 #include "shell.h"
-
+#include "history.h"
 /**
- * *add_nodeint - Add node in the begin67ning
- * @head: The pointer of the history list.
- * @str: The string received.
- *
- * Return: On success 1
+ * gethistory - gets the history list
+ * Return: 0 uposon success
  */
-
-int add_nodeint(history_t **head, char *str)
+HistList **gethistory()
 {
-	history_t *new = malloc(sizeof(head));
-	history_t *copy = *head;
+	static HistList *hlist;
 
-	if (!new)
-	{
-		free_listint(*head);
-		return (-1);
-	}
+	return (&hlist);
+}
+/**
+ * sethist - set hist and value
+ * @cmd: command
+ * Return: 0 upon success
+ */
+int sethist(char *cmd)
+{
+	HistList **hlistroot = gethistory();
+	HistList *hlist = *hlistroot;
+	HistList *ptr = hlist, *new;
 
-	new->comms = _strdup(str);
-	/* printf("DEBUG: Address comms %p\n", (void*)&new->comms);  */
-	/*  printf("DEBUG: Address new %p\n", (void*)&new);  */
-	/*  printf("DEBUG: Address new next  %p\n", (void*)&new->next);  */
-	/*  printf("DEBUG: Address new prev %p\n", (void*)&new->prev);  */
-	if (new->comms == NULL)
+	if (hlist == NULL)
 	{
-		free_listint(*head);
-		return (-1);
+		new = malloc(sizeof(HistList));
+		if (new == NULL)
+			return (-1);
+
+		new->cmd = _strdup(cmd);
+		new->next = NULL;
+		*hlistroot = new;
+		return (0);
 	}
-	new->prev = NULL;
+	while (ptr->next != NULL)
+		ptr = ptr->next;
+
+	new = malloc(sizeof(HistList));
+	if (new == NULL)
+		return (-1);
+	new->cmd = _strdup(cmd);
 	new->next = NULL;
-	if (!*head)
-	{
-		*head = new;
-	}
-	else
-	{
-		new->next = copy;
-		*head = new;
-	}
-	return (1);
+	ptr->next = new;
+	return (0);
 }
-
 /**
- * free_listint - Print the list of a single list
- * @head: The pointer of the list
+ * print_hist - prints all elements of listint
  *
- * Return: The number of elements in the list
+ * Return: num of elements
  */
-
-void free_listint(history_t *head)
+int print_hist(void)
 {
-	history_t *delete;
+	HistList **hlistroot = gethistory();
+	HistList *h = *hlistroot;
+	int i;
+	int len, numlen;
+	char *s, *num;
 
-	if (!head)
-		return;
-	while (head)
+	i = 0;
+	while (h != NULL)
 	{
-		delete = head->next;
-		free(head->comms);
-		free(head->prev);
-		free(head);
-		head = delete;
-	}
-	free(delete);
-}
-
-/**
- * print_listint - Print the list of a single list
- * @h: The pointer of the list.
- *
- * Return: The number of elements in the list
- */
-
-void print_listint(const history_t *h)
-{
-	while (h)
-	{
-		printf(":DEBUGG history :%s\n", h->comms);
+		len = _strlen(h->cmd);
+		s = h->cmd;
+		num = itos(i);
+		numlen = _strlen(num);
+		write(1, num, numlen);
+		_putchar(' ');
+		write(1, s, len);
 		h = h->next;
+		i++;
 	}
+	return (i);
+}
+/**
+ * exit_hist - exit history and copy to file
+ *
+ * Return: int
+ */
+int exit_hist(void)
+{
+
+	int fd;
+	char *file = ".simple_shell_history";
+	int len;
+	char *s;
+
+	HistList **hlistroot = gethistory();
+	HistList *hlist = *hlistroot;
+	HistList *ptr = hlist;
+
+/*
+ *	file = tildeexpand(file);
+ */
+	fd = open(file, O_CREAT | O_RDWR, 0600);
+	if (fd == -1)
+		return (-1);
+
+	while (hlist != NULL)
+	{
+		ptr = hlist->next;
+		s = hlist->cmd;
+		len = _strlen(s);
+		write(fd, s, len);
+		free(hlist->cmd);
+		free(hlist);
+		hlist = ptr;
+	}
+
+	close(fd);
+
+
+	return (1);
 }

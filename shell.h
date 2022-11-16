@@ -1,103 +1,102 @@
-#ifndef SHELL_H
-#define SHELL_H
+#ifndef SHELLH
+#define SHELLH
 
+#define _GNU_SOURCE
 #include <stdio.h>
-#include <wchar.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
+#include <fcntl.h>
 #include <sys/types.h>
+#include <sys/wait.h>
+#include "history.h"
+#include "shellvars.h"
+/*#include <string.h>*/
 
-/**
- * struct error_msg - An structure for each error message
- *
- * @ecode: error code
- * @msg: pointer to error message
- * @size: error message length.
- */
-typedef struct error_msg
-{
-	int ecode;
-	char *msg;
-	int  size;
-} error_msg_t;
+/* from in.c */
+int shintmode(void);
 
-/**
- * struct built_s - Builtings commands
- * @command: command name.
- * @f: function to call.
- *
- * Description: Longer description
- */
-typedef struct built_s
-{
-	char *command;
-	void (*f)(char **);
-} built_t;
+/* from _printenv.c */
+int _printenv(void);
 
-/**
- * struct history - An structure for each command readed
- *
- * @id_h: error code
- * @comms: Commands
- * @prev: Previous element
- * @next: Next element
- */
+/* from cmdcall.c */
+int builtincall(char *av[]);
+int cmdcall(char *av[], char *path);
 
-typedef struct history
-{
-	unsigned int id_h;
-	char *comms;
-	struct history *prev;
-	struct history *next;
-} history_t;
+/* from parser.c */
+int parseargs(char **buf);
 
-/**
- * struct command_s - An structure for each command
- *
- * @command: command with arguments.
- * @next: pointer to next command.
- */
-typedef struct command_s
-{
-	char **command;
-	struct command_s *next;
-} command_t;
+/* from errhandl.c */
+int errhandl(int status);
 
-/* Shell functions */
-command_t **_prompt(char *, char *);
-int _fork(char *, command_t *, char *, char **);
-int _stat(char *, char *);
-int _exec(char *, char **, char **);
+/* from _getenv.c and getenviron.c */
+char ***getenviron(void);
+int setallenv(char **environ, char *add);
+char *_getenv(char *avzero);
+int _setenv(char *name, char *val);
+int _unsetenv(char *name);
+char **getallenv(void);
 
-/* Utilities */
-char *read_line(void);
-
+/* from string.c */
 size_t _strlen(char *str);
-command_t *_parser_cmd(char *, char *);
-size_t _parser_arg(char *, char **, size_t *);
-void print_char_pointer_arr(char **, size_t);
-int add_nodeint(history_t **head, char *str);
+char *_strcpy(char *dest, char *src);
+int _strcmp(char *, char *);
 char *_strdup(char *str);
-void free_listint(history_t *head);
-void print_listint(const history_t *);
-char *find_path(char **);
-char *_strstr(char *haystack, char *needle);
-void print_env(char **);
-char *_which(char *p_rec, char *first_arg);
-char *string_nconcat(char *s1, char *s2, unsigned int n);
-int _strcmp(char *s1, char *s2);
-void _exit_func(char **);
-int verif_built_comm(char *str, char **env);
+char *_strcat(char *a, char *b);
 
-/* Error handler */
-void error_handler(char *, int);
-void error_handler_set_default(int, char *);
+/* from utility.c */
+char *itos(int digits);
+char *_strchr(char *s, char c);
+int fprintstrs(int fd, char *str, ...);
+int printerr(char *);
+int linecount(int);
 
-/* Command Utilities */
-command_t *new_cmd_node(char *);
-void add_tok_to_cmd(char *, command_t *, size_t, char *);
+/* from cd.c */
+int _cd(char *av[]);
+
+/* from alias.c */
+int aliascmd(char **av);
+char *getalias(char *name);
+int unsetalias(char *name);
+
+/* from shellvars.c */
+int initsvars(int ac, char **av);
+char *getsvar(char *name);
+int setsvar(char *name, char *val);
+int unsetsvar(char *name);
+ShellVar **getspecial(void);
+ShellVar **getvars(void);
+
+/* from _realloc.c */
+void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size);
+
+/* from _strtok.c */
+char *strtok(char *str, char *delim);
+
+/* from _getline.c */
+int _getline(char **lineptr, int fd);
+
+char *strtokqe(char *str, char *delim, int escflags);
+
+
+/* from _printenv.c */
+int _printenv(void);
+int _putchar(char c);
+
+/*from history.c*/
+int sethist(char *cmd);
+int print_hist(void);
+int exit_hist(void);
+
+/*from help.c*/
+int help(char *cmd);
+
+/* from exitcleanup.c */
+void exitcleanup(char **av);
+
+/* from _atoi*/
+int _atoi(char *s);
+
+char *_getpid(void);
+
 
 #endif
